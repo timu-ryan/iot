@@ -1,0 +1,37 @@
+POST http://127.0.0.1:8000/auth/users/
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "TestPassword123!"
+}
+
+
+###
+
+
+POST http://127.0.0.1:8000/auth/jwt/create/
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "TestPassword123!"
+}
+
+
+
+###
+
+
+GET http://127.0.0.1:8000/auth/users/me/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3NzkwNjc3LCJqdGkiOiI1MjA1NjQzZDIxZDc0YTBkODBhOTBkZTFhNjg4ZTk3YiIsInVzZXJfaWQiOjJ9.e7AJQgHonTywWt1dSXuopUeuMwzJzlyhemVnXxfgyOM
+
+
+###
+
+POST http://127.0.0.1:8000/auth/jwt/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0Nzc5MDY5OCwianRpIjoiYWYzNzlmNmExOWI3NGM1NGEwNjAzNTk1Y2Q0NzA0ODAiLCJ1c2VyX2lkIjoyfQ.-ORY5etqIBwNTAN-MoU7wlCkJB015H0rY2OQC7hda5o"
+}
