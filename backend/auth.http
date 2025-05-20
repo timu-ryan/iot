@@ -1,37 +1,103 @@
-POST http://127.0.0.1:8000/auth/users/
-Content-Type: application/json
-
-{
-  "email": "test@example.com",
-  "password": "TestPassword123!"
-}
-
-
-###
-
-
+### Получение токена (JWT)
 POST http://127.0.0.1:8000/auth/jwt/create/
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
-  "password": "TestPassword123!"
+  "email": "admin@example.com",
+  "password": "adminpassword"
 }
 
-
-
 ###
 
-
+### Получение информации о текущем пользователе
 GET http://127.0.0.1:8000/auth/users/me/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3NzkwNjc3LCJqdGkiOiI1MjA1NjQzZDIxZDc0YTBkODBhOTBkZTFhNjg4ZTk3YiIsInVzZXJfaWQiOjJ9.e7AJQgHonTywWt1dSXuopUeuMwzJzlyhemVnXxfgyOM
-
+Authorization: Bearer {{access_token}}
 
 ###
 
-POST http://127.0.0.1:8000/auth/jwt/refresh/
+### Создание компании (только для SUPERUSER)
+POST http://127.0.0.1:8000/api/companies/
 Content-Type: application/json
+Authorization: Bearer {{access_token}}
 
 {
-  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0Nzc5MDY5OCwianRpIjoiYWYzNzlmNmExOWI3NGM1NGEwNjAzNTk1Y2Q0NzA0ODAiLCJ1c2VyX2lkIjoyfQ.-ORY5etqIBwNTAN-MoU7wlCkJB015H0rY2OQC7hda5o"
+  "name": "Test Company"
 }
+
+###
+
+### Получение списка компаний (только для SUPERUSER)
+GET http://127.0.0.1:8000/api/companies/
+Authorization: Bearer {{access_token}}
+
+###
+
+### Создание пользователя (MANAGER или EMPLOYEE)
+POST http://127.0.0.1:8000/api/users/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "email": "manager@test.com",
+  "password": "strongpassword123",
+  "first_name": "Anna",
+  "last_name": "Ivanova",
+  "role": "MANAGER"
+}
+
+###
+
+### Получение всех пользователей своей компании (для менеджера)
+GET http://127.0.0.1:8000/api/users/
+Authorization: Bearer {{access_token}}
+
+###
+
+### Создание контроллера (Controller)
+POST http://127.0.0.1:8000/api/controllers/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "name": "Контроллер 1"
+}
+
+###
+
+### Получение контроллеров
+GET http://127.0.0.1:8000/api/controllers/
+Authorization: Bearer {{access_token}}
+
+###
+
+### Создание датчика (Sensor)
+POST http://127.0.0.1:8000/api/sensors/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "name": "Температура",
+  "type": "temperature",
+  "client": 1
+}
+
+###
+
+### Получение сообщений от датчика
+GET http://127.0.0.1:8000/api/messages/
+Authorization: Bearer {{access_token}}
+
+###
+
+### Отправка сообщения от контроллера (через отдельную аутентификацию, см. ниже)
+POST http://127.0.0.1:8000/api/messages/
+Content-Type: application/json
+x-api-key: <API_KEY_КОНТРОЛЛЕРА>
+
+{
+  "sensor": 1,
+  "value": 24.7,
+  "status": "ok"
+}
+
+###

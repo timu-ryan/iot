@@ -77,7 +77,7 @@ class Sensor(models.Model):
 
     @property
     def company(self):
-        return self.controller.company if self.controller else None
+        return self.controller.company if self.controller else None     # type: ignore
 
 
 class Message(models.Model):
