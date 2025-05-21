@@ -1,1 +1,74 @@
+# Виртуальные окружения
 venv/
+env/
+.venv/
+venv*/
+.env/
+
+# Файлы зависимостей (если не используются требования вручную)
+*.egg-info/
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyd
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg
+
+# Конфиденциальные данные
+.env
+.env.local
+.env.*.local
+secrets.json
+*.key
+*.certм
+
+# Локальные БД
+*.sqlite3
+*.db
+db.sqlite3
+
+# Медиафайлы (загружаемые пользователями)
+/media/
+!/media/.gitkeep  # (если нужно сохранить пустую папку)
+
+# IDE и редакторы
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+
+# Тесты и покрытие
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Статика (если не хранится в репозитории)
+/staticfiles/
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~

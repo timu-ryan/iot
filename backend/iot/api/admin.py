@@ -1,15 +1,16 @@
+import uuid
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Company, Controller, Sensor, Message
+from .models import User, Company, Controller, Sensor, Message, Relay, ManualControlLog
 
-# Фильтр по компании
+# --- Фильтр по компании ---
 class CompanyFilter(admin.SimpleListFilter):
     title = 'Company'
     parameter_name = 'company'
 
     def lookups(self, request, model_admin):
         if request.user.is_superuser:
-            return ((c.id, c.name) for c in Company.objects.all())
+            return [(c.id, c.name) for c in Company.objects.all()]
         if request.user.company:
             return [(request.user.company.id, request.user.company.name)]
         return []
@@ -22,6 +23,7 @@ class CompanyFilter(admin.SimpleListFilter):
         return queryset.none()
 
 
+# --- Админка пользователя ---
 @admin.register(User)
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -47,11 +49,9 @@ class CustomUserAdmin(BaseUserAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields.pop('username', None)
-        
-        if not request.user.is_superuser and not obj:
-            # Только при создании, менеджер не может выбрать компанию
-            form.base_fields.pop('company', None)
 
+        if not request.user.is_superuser and not obj:
+            form.base_fields.pop('company', None)
         return form
 
     def save_model(self, request, obj, form, change):
@@ -65,16 +65,14 @@ class CustomUserAdmin(BaseUserAdmin):
         if obj.role == obj.Role.MANAGER:
             obj.is_staff = True
 
-        # Сохраняем пользователя, чтобы у него появился ID
         super().save_model(request, obj, form, change)
 
-        # Теперь можно добавлять права
         if obj.role == obj.Role.MANAGER:
             from django.contrib.auth.models import Permission
             from django.contrib.contenttypes.models import ContentType
-            from .models import Company, Controller, Sensor, Message, User as CustomUserModel
+            from .models import Company, Controller, Sensor, Message, Relay, ManualControlLog
 
-            models_to_grant = [CustomUserModel, Company, Controller, Sensor, Message]
+            models_to_grant = [User, Company, Controller, Sensor, Message, Relay, ManualControlLog]
             for model in models_to_grant:
                 content_type = ContentType.objects.get_for_model(model)
                 permissions = Permission.objects.filter(content_type=content_type)
@@ -100,6 +98,7 @@ class CustomUserAdmin(BaseUserAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+# --- Вложенная админка контроллеров ---
 class ControllerInline(admin.TabularInline):
     model = Controller
     extra = 0
@@ -121,7 +120,7 @@ class CompanyAdmin(admin.ModelAdmin):
 
 @admin.register(Controller)
 class ControllerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'company', 'created_at')
+    list_display = ('name', 'company', 'control_mode', 'created_at')
     list_filter = (CompanyFilter,)
     readonly_fields = ('api_key',)
 
@@ -135,6 +134,11 @@ class ControllerAdmin(admin.ModelAdmin):
         if db_field.name == "company" and not request.user.is_superuser:
             kwargs["queryset"] = Company.objects.filter(id=request.user.company.id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if not obj.api_key:
+            obj.api_key = uuid.uuid4().hex
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Sensor)
@@ -159,4 +163,29 @@ class MessageAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         if not request.user.is_superuser and request.user.company:
             return qs.filter(sensor__controller__company=request.user.company)
+        return qs
+
+
+@admin.register(Relay)
+class RelayAdmin(admin.ModelAdmin):
+    list_display = ('name', 'controller', 'is_working', 'description')
+    list_filter = ('controller__company', 'controller')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser and request.user.company:
+            return qs.filter(controller__company=request.user.company)
+        return qs
+
+
+@admin.register(ManualControlLog)
+class ManualControlLogAdmin(admin.ModelAdmin):
+    list_display = ('controller', 'relay', 'action', 'performed_by', 'timestamp')
+    list_filter = ('controller__company', 'controller', 'relay')
+    readonly_fields = ('timestamp',)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser and request.user.company:
+            return qs.filter(controller__company=request.user.company)
         return qs

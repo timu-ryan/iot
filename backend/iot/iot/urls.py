@@ -26,7 +26,7 @@ Including another URLconf
 from django.contrib import admin
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from api.views import CompanyViewSet, UserViewSet, ControllerViewSet, SensorViewSet, MessageViewSet
+from api.views import CompanyViewSet, UserViewSet, ControllerViewSet, SensorViewSet, MessageViewSet, RelayControlView
 
 router = DefaultRouter()
 router.register(r'companies', CompanyViewSet)
@@ -40,4 +40,5 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
+    path("control/<slug:controller_uuid>/relay/", RelayControlView.as_view(), name="relay-control"),
 ]
