@@ -69,11 +69,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiY
 
 ### сообщения по дате и сенсору 
 
-GET http://127.0.0.1:8000/api/messages/?sensor=fc5c1a5e-ba02-4733-a62c-2c2b3d1534d4&start=2025-05-26T13:33:00Z&end=2025-05-26T13:40:00Z
+GET http://127.0.0.1:8000/api/messages/?sensor=fc5c1a5e-ba02-4733-a62c-2c2b3d1534d4&start=2025-05-26T13:32:00Z&end=2025-05-26T13:39:00Z
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
 Content-Type: application/json
 
 ###
+
+GET http://127.0.0.1:8000/messages/latest/?sensor=fc5c1a5e-ba02-4733-a62c-2c2b3d1534d4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
+Content-Type: application/json
 
 
 ###
@@ -94,6 +98,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiY
 
 ###
 
+### Получение всех реле
+GET http://127.0.0.1:8000/api/relays/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
+
+
+
+
+###
+
 
 ### Отправка сообщения от контроллера (через отдельную аутентификацию, см. ниже)
 POST http://127.0.0.1:8000/api/messages/
@@ -111,23 +124,14 @@ x-api-key: <API_KEY_КОНТРОЛЛЕРА>
 
 POST http://127.0.0.1:8000/control/63f9b53c-33a8-486d-b71f-53eb526e4ce9/relay/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3ODc5NzY1LCJqdGkiOiJmYTk1MzhiZDJlZmU0ZmI1OTU0NTUzZjU4ZjE5Yzk0NSIsInVzZXJfaWQiOjE2fQ.XnfXwANcwIVc0lGipuVBonx-SDl6ztocvDZlz2CU-vM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzU5MjY0LCJqdGkiOiI1ODEzNTQ2YmM4OTU0MjdkYjAzOWRiMWU2Y2JmZjlmNCIsInVzZXJfaWQiOjE3fQ.j77BKrd6X0S_3bFGEMlXuYlwsebxtcC969-WA_AlQaI
 
 {
-  "relay_uuid": "cadfd433-62ab-44b5-89e3-8ffe5152cffb",
+  "relay_uuid": "ec4956f1-1079-47f2-9e0b-460cb4798c9c",
   "is_working": true
 }
 
 ###
-
-POST http://127.0.0.1:8000/control/caa6dae7e495406f93062b6dccae3846/relay/
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3Nzk3NjA0LCJqdGkiOiJhMzdkY2VmMTljOWE0YTBlODgxMjY3ZDgwOTQ2MDk0NyIsInVzZXJfaWQiOjEzfQ.B8c0zUh1sdL8cBYlqsIEMXi7O8wwXMH86J_TCLBo0bs
-
-{
-  "relay": "light",
-  "action": "off"
-}
 
 
 ###

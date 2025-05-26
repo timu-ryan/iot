@@ -26,7 +26,7 @@ Including another URLconf
 from django.contrib import admin
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from api.views import CompanyViewSet, UserViewSet, ControllerViewSet, SensorViewSet, MessageViewSet, RelayControlView
+from api.views import CompanyViewSet, UserViewSet, ControllerViewSet, SensorViewSet, MessageViewSet, RelayControlView, RelayViewSet, LatestSensorMessageView
 
 router = DefaultRouter()
 router.register(r'companies', CompanyViewSet)
@@ -34,6 +34,7 @@ router.register(r'users', UserViewSet)
 router.register(r'controllers', ControllerViewSet, basename='controller')
 router.register(r'sensors', SensorViewSet, basename='sensor')
 router.register(r'messages', MessageViewSet, basename='message')
+router.register(r'relays', RelayViewSet, basename='relay')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -41,4 +42,5 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path("control/<slug:controller_uuid>/relay/", RelayControlView.as_view(), name="relay-control"),
+    path('messages/latest/', LatestSensorMessageView.as_view(), name='latest-sensor-message'),
 ]

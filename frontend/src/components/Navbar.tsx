@@ -16,9 +16,9 @@ export default function Navbar() {
     <nav className="bg-gray-800 text-white p-4 flex justify-between">
       <div className="space-x-4">
         <Link href="/dashboard">Dashboard</Link>
-        <Link href="/sensors">Sensors</Link>
+        {/* <Link href="/sensors">Sensors</Link>
         <Link href="/controllers">Controllers</Link>
-        <Link href="/messages">Messages</Link>
+        <Link href="/messages">Messages</Link> */}
       </div>
       <button onClick={logout} className="text-red-400 hover:underline">Выйти</button>
     </nav>

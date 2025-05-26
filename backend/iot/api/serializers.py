@@ -40,7 +40,8 @@ class ControllerSerializer(serializers.ModelSerializer):
 
 class SensorSerializer(serializers.ModelSerializer):
     uuid = serializers.UUIDField(read_only=True)
-
+    controller = serializers.UUIDField(source='controller.uuid', read_only=True)
+    
     class Meta:
         model = Sensor
         fields = ['id', 'uuid', 'name', 'type', 'controller', 'description']
@@ -55,16 +56,24 @@ class SensorSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    sensor_uuid = serializers.SerializerMethodField()
+    controller_uuid = serializers.SerializerMethodField()
+
     class Meta:
         model = Message
-        fields = ['id', 'sensor', 'value', 'status', 'timestamp']
-        read_only_fields = ['id', 'timestamp']
+        fields = ['id', 'sensor', 'sensor_uuid', 'controller_uuid', 'value', 'status', 'timestamp']
+
+    def get_sensor_uuid(self, obj):
+        return str(obj.sensor.uuid)
+
+    def get_controller_uuid(self, obj):
+        return str(obj.sensor.controller.uuid)
 
 
 class RelaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Relay
-        fields = ['id', 'name', 'controller', 'is_working']
+        fields = ['id', 'uuid', 'name', 'controller', 'is_working']
         read_only_fields = ['id']
 
     def validate(self, data):

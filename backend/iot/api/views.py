@@ -10,7 +10,7 @@ import paho.mqtt.publish as publish
 
 from .models import Company, Relay, User, Controller, Sensor, Message, ManualControlLog
 from .serializers import (
-    CompanySerializer, UserSerializer,
+    CompanySerializer, UserSerializer, RelaySerializer,
     ControllerSerializer, SensorSerializer, MessageSerializer
 )
 from .permissions import IsSuperUser, IsCompanyUser
@@ -50,6 +50,17 @@ class SensorViewSet(viewsets.ModelViewSet):
         if user.role == 'SUPERUSER':
             return Sensor.objects.all()
         return Sensor.objects.filter(controller__company=user.company)
+
+
+class RelayViewSet(viewsets.ModelViewSet):
+    serializer_class = RelaySerializer
+    permission_classes = [IsAuthenticated, IsCompanyUser]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'SUPERUSER':
+            return Relay.objects.all()
+        return Relay.objects.filter(controller__company=user.company)
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
@@ -93,6 +104,32 @@ class MessageViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(timestamp__lte=end_date)
 
         return queryset
+    
+
+class LatestSensorMessageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        sensor_uuid = request.query_params.get("sensor")
+        if not sensor_uuid:
+            raise ValidationError({"sensor": "sensor UUID is required"})
+
+        try:
+            sensor = Sensor.objects.get(uuid=sensor_uuid)
+        except Sensor.DoesNotExist:
+            raise ValidationError({"sensor": "Sensor not found"})
+
+        # фильтрация доступа
+        if not request.user.is_superuser and sensor.controller.company != request.user.company:
+            return Response({"error": "Access denied"}, status=403)
+
+        message = sensor.messages.order_by('-timestamp').first()
+
+        if not message:
+            return Response({"message": "No data yet"}, status=204)
+
+        serializer = MessageSerializer(message)
+        return Response(serializer.data)
 
 
 class RelayControlView(APIView):
