@@ -3,8 +3,8 @@ POST http://127.0.0.1:8000/auth/jwt/create/
 Content-Type: application/json
 
 {
-  "email": "relay-manager@mail.ru",
-  "password": "QWEdsa123"
+  "email": "somemail@mail.ru",
+  "password": "qweDSA123"
 }
 
 ###
@@ -53,41 +53,47 @@ Authorization: Bearer {{access_token}}
 
 ###
 
-### Создание контроллера (Controller)
-POST http://127.0.0.1:8000/api/controllers/
-Content-Type: application/json
-Authorization: Bearer {{access_token}}
-
-{
-  "name": "Контроллер 1"
-}
-
-###
-
 ### Получение контроллеров
 GET http://127.0.0.1:8000/api/controllers/
 Authorization: Bearer {{access_token}}
 
-###
-
-### Создание датчика (Sensor)
-POST http://127.0.0.1:8000/api/sensors/
-Content-Type: application/json
-Authorization: Bearer {{access_token}}
-
-{
-  "name": "Температура",
-  "type": "temperature",
-  "client": 1
-}
 
 ###
 
 ### Получение сообщений от датчика
 GET http://127.0.0.1:8000/api/messages/
-Authorization: Bearer {{access_token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
+
 
 ###
+
+### сообщения по дате и сенсору 
+
+GET http://127.0.0.1:8000/api/messages/?sensor=fc5c1a5e-ba02-4733-a62c-2c2b3d1534d4&start=2025-05-26T13:33:00Z&end=2025-05-26T13:40:00Z
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
+Content-Type: application/json
+
+###
+
+
+###
+
+### Получение всех контроллеров
+GET http://127.0.0.1:8000/api/controllers/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
+
+###
+
+
+
+###
+
+### Получение всех датчиков
+GET http://127.0.0.1:8000/api/sensors/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
+
+###
+
 
 ### Отправка сообщения от контроллера (через отдельную аутентификацию, см. ниже)
 POST http://127.0.0.1:8000/api/messages/

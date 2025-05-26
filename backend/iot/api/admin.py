@@ -50,7 +50,7 @@ class CustomUserAdmin(BaseUserAdmin):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields.pop('username', None)
 
-        if not request.user.is_superuser and not obj:
+        if not request.user.is_superuser:
             form.base_fields.pop('company', None)
         return form
 
@@ -120,9 +120,9 @@ class CompanyAdmin(admin.ModelAdmin):
 
 @admin.register(Controller)
 class ControllerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'company', 'control_mode', 'created_at')
+    list_display = ('uuid', 'name', 'company', 'control_mode', 'created_at')
     list_filter = (CompanyFilter,)
-    readonly_fields = ('api_key',)
+    readonly_fields = ('api_key', 'uuid')  # UUID readonly
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -143,8 +143,13 @@ class ControllerAdmin(admin.ModelAdmin):
 
 @admin.register(Sensor)
 class SensorAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'controller')
+    list_display = ('id', 'uuid', 'name', 'type', 'controller', 'company')
     list_filter = ('controller__company', 'controller')
+    readonly_fields = ('uuid',)
+
+    def company(self, obj):
+        return obj.controller.company
+    company.short_description = 'Company'
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -155,9 +160,17 @@ class SensorAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ('sensor', 'value', 'status', 'timestamp')
+    list_display = ('sensor', 'controller', 'company', 'value', 'status', 'timestamp')
     list_filter = ('sensor__controller__company', 'sensor__controller', 'sensor')
-    readonly_fields = ('timestamp',)
+    readonly_fields = ('timestamp', )
+
+    def controller(self, obj):
+        return obj.sensor.controller
+    controller.short_description = 'Controller'
+
+    def company(self, obj):
+        return obj.sensor.controller.company
+    company.short_description = 'Company'
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -168,8 +181,12 @@ class MessageAdmin(admin.ModelAdmin):
 
 @admin.register(Relay)
 class RelayAdmin(admin.ModelAdmin):
-    list_display = ('name', 'controller', 'is_working', 'description')
-    list_filter = ('controller__company', 'controller')
+    list_display = ('uuid', 'name', 'controller', 'company', 'is_working', 'description')
+    list_filter = ('controller__company', 'controller', 'uuid',)
+
+    def company(self, obj):
+        return obj.controller.company
+    company.short_description = 'Company'
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

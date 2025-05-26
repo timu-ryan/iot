@@ -3,6 +3,9 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
+from django.utils.dateparse import parse_datetime
+
 import paho.mqtt.publish as publish
 
 from .models import Company, Relay, User, Controller, Sensor, Message, ManualControlLog
@@ -54,9 +57,42 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'SUPERUSER':
-            return Message.objects.all()
-        return Message.objects.filter(sensor__controller__company=user.company)
+        queryset = Message.objects.all()
+
+        if user.role != 'SUPERUSER':
+            queryset = queryset.filter(sensor__controller__company=user.company)
+
+        # валидация по sensor uuid
+        sensor_uuid = self.request.query_params.get('sensor')
+
+        if sensor_uuid:
+            try:
+                sensor = Sensor.objects.get(uuid=sensor_uuid)
+                queryset = queryset.filter(sensor=sensor)
+            except Sensor.DoesNotExist:
+                raise ValidationError({"sensor": "Sensor with this UUID does not exist."})
+
+
+        # валидация по controller uuid
+        controller_uuid = self.request.query_params.get('controller')
+        if controller_uuid:
+            queryset = queryset.filter(sensor__controller__uuid=controller_uuid)
+
+        # кастомная фильтрация по дате
+        start = self.request.query_params.get('start')
+        end = self.request.query_params.get('end')
+
+        if start:
+            start_date = parse_datetime(start)
+            if start_date:
+                queryset = queryset.filter(timestamp__gte=start_date)
+
+        if end:
+            end_date = parse_datetime(end)
+            if end_date:
+                queryset = queryset.filter(timestamp__lte=end_date)
+
+        return queryset
 
 
 class RelayControlView(APIView):
