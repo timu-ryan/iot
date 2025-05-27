@@ -5,13 +5,15 @@ import {
   getControllers,
   getSensors,
   getRelays,
-  getLatestMessage
+  getLatestMessage,
+  toggleRelay,
+  getMe
 } from '@/lib/api'
 import AuthGuard from '@/components/AuthGuard'
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { toggleRelay } from '@/lib/api'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import Link from 'next/link'
 
 interface Controller {
@@ -42,21 +44,27 @@ interface SensorWithValue extends Sensor {
 export default function DashboardPage() {
   const [controllers, setControllers] = useState<Controller[]>([])
   const [sensors, setSensors] = useState<SensorWithValue[]>([])
+  const [currentUser, setCurrentUser] = useState({})
   const [relays, setRelays] = useState<Relay[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch initial data
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedRelay, setSelectedRelay] = useState<Relay | null>(null)
+  const [pendingState, setPendingState] = useState(false)
+
   useEffect(() => {
     async function fetchData() {
       try {
-        const [ctrls, sens, rlys] = await Promise.all([
+        const [ctrls, sens, rlys, currUsr] = await Promise.all([
           getControllers(),
           getSensors(),
-          getRelays()
+          getRelays(),
+          getMe()
         ])
         setControllers(ctrls)
         setSensors(sens)
         setRelays(rlys)
+        setCurrentUser(currUsr)
       } catch (e) {
         console.error('Ошибка загрузки данных', e)
       } finally {
@@ -67,7 +75,6 @@ export default function DashboardPage() {
     fetchData()
   }, [])
 
-  // Poll latest sensor values
   useEffect(() => {
     const interval = setInterval(async () => {
       const updatedSensors = await Promise.all(
@@ -76,7 +83,7 @@ export default function DashboardPage() {
             const msg = await getLatestMessage(s.uuid)
             return msg
               ? { ...s, value: msg.value }
-              : { ...s, value: undefined }  // или null, если предпочитаешь
+              : { ...s, value: undefined }
           } catch (err) {
             console.warn(`Ошибка получения значения для ${s.uuid}`, err)
             return s
@@ -85,28 +92,34 @@ export default function DashboardPage() {
       )
       setSensors(updatedSensors)
     }, 5000)
-  
+
     return () => clearInterval(interval)
   }, [sensors])
 
-  const handleToggleRelay = async (relay: Relay) => {
-    const confirmed = confirm(`Вы уверены, что хотите ${relay.is_working ? 'выключить' : 'включить'} реле "${relay.name}"?`)
-    if (!confirmed) return
+  const handleToggleDialog = (relay: Relay) => {
+    setSelectedRelay(relay)
+    setPendingState(!relay.is_working)
+    setDialogOpen(true)
+  }
 
+  const confirmToggle = async () => {
+    if (!selectedRelay) return
     try {
       await toggleRelay(
-        controllers.find(c => c.id === relay.controller)!.uuid,
-        relay.uuid,
-        !relay.is_working
+        controllers.find(c => c.id === selectedRelay.controller)!.uuid,
+        selectedRelay.uuid,
+        pendingState
       )
       setRelays((prev) =>
         prev.map((r) =>
-          r.id === relay.id ? { ...r, is_working: !relay.is_working } : r
+          r.id === selectedRelay.id ? { ...r, is_working: pendingState } : r
         )
       )
     } catch (err) {
       alert('Ошибка при переключении реле')
       console.error(err)
+    } finally {
+      setDialogOpen(false)
     }
   }
 
@@ -120,7 +133,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold mb-4">
               {controller.name || 'Без имени'}
             </h2>
-            <Link href={`/controller/${controller.uuid}`}>Открыть графики</Link>
+            {currentUser.role === 'MANAGER' && <Link href={`/controller/${controller.uuid}`}>Открыть графики</Link>}
             <div className="mb-4">
               <h3 className="font-semibold mb-1">Датчики:</h3>
               <ul className="list-disc list-inside space-y-1">
@@ -149,7 +162,7 @@ export default function DashboardPage() {
                       </div>
                       <Switch
                         checked={r.is_working}
-                        onCheckedChange={() => handleToggleRelay(r)}
+                        onCheckedChange={() => handleToggleDialog(r)}
                       />
                     </li>
                   ))}
@@ -158,6 +171,24 @@ export default function DashboardPage() {
           </Card>
         ))}
       </main>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Подтвердите действие</DialogTitle>
+          </DialogHeader>
+          <p>
+            Вы уверены, что хотите {pendingState ? 'включить' : 'выключить'} реле{' '}
+            <strong>{selectedRelay?.name}</strong>?
+          </p>
+          <DialogFooter className="mt-4">
+            <Button variant="secondary" onClick={() => setDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={confirmToggle}>Подтвердить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AuthGuard>
   )
 }

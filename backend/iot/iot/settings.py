@@ -62,6 +62,13 @@ SIMPLE_JWT = {
   'AUTH_HEADER_TYPES': ('Bearer', ),
 }
 
+DJOSER = {
+    'SERIALIZERS': {
+        'current_user': 'api.serializers.UserSerializer',  # путь к вашему кастомному сериализатору
+        'user': 'api.serializers.UserSerializer',
+    }
+}
+
 AUTH_USER_MODEL = 'api.User'
 
 MIDDLEWARE = [

@@ -11,7 +11,7 @@ Content-Type: application/json
 
 ### Получение информации о текущем пользователе
 GET http://127.0.0.1:8000/auth/users/me/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3Nzk3NjA0LCJqdGkiOiJhMzdkY2VmMTljOWE0YTBlODgxMjY3ZDgwOTQ2MDk0NyIsInVzZXJfaWQiOjEzfQ.B8c0zUh1sdL8cBYlqsIEMXi7O8wwXMH86J_TCLBo0bs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4NDU2MzE0LCJqdGkiOiJmN2Q1OWQ2MzVmYzU0ODQ5OTQ0ZTNjZGUwYWI2YmU2OCIsInVzZXJfaWQiOjE3fQ.f6of2PwDOUNfsfB4MzyJpvA8ZUIatyf2whip9bvD2dc
 
 ###
 

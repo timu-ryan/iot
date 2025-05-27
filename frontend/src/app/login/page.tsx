@@ -6,19 +6,22 @@ import { login, getMe } from '@/lib/api'
 import { saveToken } from '@/lib/auth'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useUser } from '@/context/UserContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
-
+  const { setUser } = useUser()
+  
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     try {
       const data = await login(email, password)
       saveToken(data.access)
-      await getMe() // проверить что токен валиден
+      const user = await getMe() // проверить что токен валиден
+      setUser(user)
       router.push('/dashboard')
     } catch (e) {
       setError('Неверный логин или пароль')
