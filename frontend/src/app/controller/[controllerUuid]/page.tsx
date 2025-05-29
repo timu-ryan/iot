@@ -37,6 +37,7 @@ import {
 } from 'date-fns'
 
 import { format } from 'date-fns'
+import { ExportToExcelButton } from '@/components/ExportToExcelButton'
 
 interface Sensor {
   id: number
@@ -272,11 +273,21 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
 
       {sensors.map((sensor) => (
         <Card key={sensor.uuid}>
-          <CardContent className="p-4">
-            <h2 className="font-semibold mb-2">
-              Датчик: {sensor.name} ({sensor.uuid})
-            </h2>
+          <CardContent className="pb-4">
+            <div className='flex justify-between items-center mb-4'>
+              <h2 className="font-semibold">
+                Датчик: {sensor.name} ({sensor.uuid})
+              </h2>
+              <ExportToExcelButton
+                sensorId={sensor.uuid}
+                startDate={dateRange.from.toISOString()}
+                endDate={dateRange.to.toISOString()}
+              />
+            </div>
             <div className="w-full h-64">
+            {messagesBySensor[sensor.uuid]?.length === 0 ? (
+              <div className="text-center text-muted-foreground mt-8">Нет данных за выбранный период</div>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={(messagesBySensor[sensor.uuid] || []).map((msg) => ({
@@ -349,6 +360,7 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
               </LineChart>
 
               </ResponsiveContainer>
+            )}
             </div>
           </CardContent>
         </Card>
