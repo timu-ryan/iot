@@ -7,7 +7,8 @@ import {
   getRelays,
   getLatestMessage,
   toggleRelay,
-  getMe
+  getMe,
+  updateControllerMode
 } from '@/lib/api'
 import AuthGuard from '@/components/AuthGuard'
 import { Card } from '@/components/ui/card'
@@ -15,11 +16,13 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import Link from 'next/link'
+import { useUser } from '@/context/UserContext'
 
 interface Controller {
   id: number
   uuid: string
   name: string
+  control_mode: string
 }
 
 interface Sensor {
@@ -42,9 +45,11 @@ interface SensorWithValue extends Sensor {
 }
 
 export default function DashboardPage() {
+
+  const { user } = useUser()
+
   const [controllers, setControllers] = useState<Controller[]>([])
   const [sensors, setSensors] = useState<SensorWithValue[]>([])
-  const [currentUser, setCurrentUser] = useState({})
   const [relays, setRelays] = useState<Relay[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -55,16 +60,14 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [ctrls, sens, rlys, currUsr] = await Promise.all([
+        const [ctrls, sens, rlys] = await Promise.all([
           getControllers(),
           getSensors(),
-          getRelays(),
-          getMe()
+          getRelays()
         ])
         setControllers(ctrls)
         setSensors(sens)
         setRelays(rlys)
-        setCurrentUser(currUsr)
       } catch (e) {
         console.error('Ошибка загрузки данных', e)
       } finally {
@@ -133,7 +136,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold mb-4">
               {controller.name || 'Без имени'}
             </h2>
-            {currentUser.role === 'MANAGER' && <Link href={`/controller/${controller.uuid}`}>Открыть графики</Link>}
+            {user?.role === 'MANAGER' && <Link href={`/controller/${controller.uuid}`}>Открыть графики</Link>}
             <div className="mb-4">
               <h3 className="font-semibold mb-1">Датчики:</h3>
               <ul className="list-disc list-inside space-y-1">
@@ -148,26 +151,74 @@ export default function DashboardPage() {
                   ))}
               </ul>
             </div>
-
-            <div>
-              <h3 className="font-semibold mb-1">Реле:</h3>
-              <ul className="list-disc list-inside space-y-1">
-                {relays
-                  .filter((r) => r.controller === controller.id)
-                  .map((r) => (
-                    <li key={r.id} className="flex items-center justify-between">
-                      <div>
-                        <span className="font-medium">{r.name}</span>{' '}
-                        <span className="text-sm text-gray-500">({r.uuid})</span>
-                      </div>
-                      <Switch
-                        checked={r.is_working}
-                        onCheckedChange={() => handleToggleDialog(r)}
-                      />
-                    </li>
-                  ))}
-              </ul>
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <span>Режим управления:</span>
+                <Switch
+                  checked={controller.control_mode === 'manual'}
+                  onCheckedChange={async () => {
+                    const newMode = controller.control_mode === 'manual' ? 'auto' : 'manual'
+                    try {
+                      const updated = await updateControllerMode(controller.id, newMode)
+                      setControllers(prev =>
+                        prev.map(c => c.id === controller.id ? { ...c, control_mode: updated.control_mode } : c)
+                      )
+                    } catch (err) {
+                      alert('Ошибка при переключении режима управления')
+                      console.error(err)
+                    }
+                  }}
+                />
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                Сейчас: <strong>{controller.control_mode === 'manual' ? 'Ручной' : 'Автоматический'}</strong>
+              </p>
             </div>
+            {controller?.control_mode.toLowerCase() === 'manual' 
+              ? <div>
+                  <h3 className="font-semibold mb-1">Реле:</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    {relays
+                      .filter((r) => r.controller === controller.id)
+                      .map((r) => (
+                        <li key={r.id} className="flex items-center justify-between">
+                          <div>
+                            <span className="font-medium">{r.name}</span>{' '}
+                            <span className="text-sm text-gray-500">({r.uuid})</span>
+                          </div>
+                          <Switch
+                            checked={r.is_working}
+                            onCheckedChange={() => handleToggleDialog(r)}
+                          />
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              : 
+                <>
+                  <p>если хотите управлять реле, включите ручной режим управления</p>
+                  <div className='opacity-40'>
+                    <h3 className="font-semibold mb-1">Реле:</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {relays
+                        .filter((r) => r.controller === controller.id)
+                        .map((r) => (
+                          <li key={r.id} className="flex items-center justify-between">
+                            <div>
+                              <span className="font-medium">{r.name}</span>{' '}
+                              <span className="text-sm text-gray-500">({r.uuid})</span>
+                            </div>
+                            <Switch
+                              checked={r.is_working}
+                              onCheckedChange={() => handleToggleDialog(r)}
+                            />
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                </>
+            
+            }
           </Card>
         ))}
       </main>

@@ -33,10 +33,27 @@ def on_connect(client, userdata, flags, rc):
 
 # Обработчики сообщений
 
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
 def handle_init(client, userdata, msg):
     controller_uuid = msg.topic.split("/")[1]  # "init/{uuid}"
+    logger.info(f"Received init message on topic '{msg.topic}' with payload: {msg.payload!r}\n\n")
+
     try:
-        payload = json.loads(msg.payload.decode())
+        # Попытка декодировать JSON
+        try:
+            payload = json.loads(msg.payload.decode())
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to decode JSON: {e}")
+            return
+
+        if not isinstance(payload, dict):
+            logger.error(f"Expected JSON object, got: {type(payload).__name__}")
+            return
+
         api_key = payload.get("api_key")
         name = payload.get("name")
         company_name = payload.get("company_name")
@@ -51,28 +68,44 @@ def handle_init(client, userdata, msg):
 
         controller, created = Controller.objects.get_or_create(
             uuid=controller_uuid,
-            defaults={"api_key": api_key, "name": name, "company": company}
+            defaults={
+                "api_key": api_key,
+                "name": name,
+                "company": company
+            }
         )
 
         for sensor in sensors:
-            Sensor.objects.get_or_create(
-                controller=controller,
-                name=sensor["name"],
-                type=sensor["type"],
-                uuid=sensor["uuid"]
-            )
+            try:
+                Sensor.objects.get_or_create(
+                    controller=controller,
+                    name=sensor["name"],
+                    type=sensor["type"],
+                    uuid=sensor["uuid"]
+                )
+            except KeyError as e:
+                logger.warning(f"Missing sensor field: {e}")
+            except Exception as e:
+                logger.error(f"Error creating sensor: {e}")
 
         for relay in relays:
-            Relay.objects.get_or_create(
-                controller=controller,
-                name=relay["name"],
-                defaults={"description": relay.get("description", "")},
-                uuid=relay["uuid"]
-            )
+            try:
+                Relay.objects.get_or_create(
+                    controller=controller,
+                    name=relay["name"],
+                    uuid=relay["uuid"],
+                    defaults={"description": relay.get("description", "")}
+                )
+            except KeyError as e:
+                logger.warning(f"Missing relay field: {e}")
+            except Exception as e:
+                logger.error(f"Error creating relay: {e}")
 
-        logger.info(f"Controller '{controller.name}' initialized under '{company.name}'")
+        logger.info(f"Controller '{controller.name}' initialized under company '{company.name}'\n\n")
+
     except Exception as e:
         logger.exception("Init handling error")
+
 
 def handle_sensor_data(client, userdata, msg):
     topic_parts = msg.topic.split("/")

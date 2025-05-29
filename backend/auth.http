@@ -60,6 +60,16 @@ Authorization: Bearer {{access_token}}
 
 ###
 
+PATCH /api/controllers/<controller_id>/
+Content-Type: application/json
+Authorization: Bearer <your_token>
+
+{
+  "control_mode": "auto"
+}
+
+###
+
 ### Получение сообщений от датчика
 GET http://127.0.0.1:8000/api/messages/
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ4MzUzMjU2LCJqdGkiOiI3ZTM1YjkyZThmNTQ0OTMyYjEwYmIxZTJiZWY0ODNiZiIsInVzZXJfaWQiOjE3fQ.puFvIlM9NnZPhGk9YaW_8lr7NJJCW0-GrS0EZybzsO0
