@@ -21,6 +21,22 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+import {
+  startOfHour,
+  endOfHour,
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  subHours,
+  subMinutes,
+  isBefore,
+  isAfter,
+} from 'date-fns'
+
 import { format } from 'date-fns'
 
 interface Sensor {
@@ -37,12 +53,23 @@ interface Message {
   sensor_uuid: string
 }
 
+type PresetValue =
+  | 'this_hour'
+  | 'last_12_hours'
+  | 'today'
+  | 'yesterday'
+  | 'this_week'
+  | 'this_month'
+  | 'custom'
+
 const PRESETS = [
-  { label: 'Последний час', value: 'last_1h', durationMs: 1 * 60 * 60 * 1000 },
-  { label: 'Последние 12 часов', value: 'last_12h', durationMs: 12 * 60 * 60 * 1000 },
-  { label: 'Последний день', value: 'last_1d', durationMs: 24 * 60 * 60 * 1000 },
-  { label: 'Последние 7 дней', value: 'last_7d', durationMs: 7 * 24 * 60 * 60 * 1000 },
-  { label: 'Пользовательский', value: 'custom', durationMs: 0 },
+  { label: 'Этот час', value: 'this_hour' },
+  { label: 'Эти 12 часов', value: 'last_12_hours' },
+  { label: 'Сегодня', value: 'today' },
+  { label: 'Вчера', value: 'yesterday' },
+  { label: 'Эта неделя', value: 'this_week' },
+  { label: 'Этот месяц', value: 'this_month' },
+  { label: 'Пользовательский', value: 'custom' },
 ]
 
 export default function ControllerChartsPage({ params }: { params: Promise<{ controllerUuid: string }> }) {
@@ -51,18 +78,14 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
   const [sensors, setSensors] = useState<Sensor[]>([])
   const [messagesBySensor, setMessagesBySensor] = useState<Record<string, Message[]>>({})
 
-  const [preset, setPreset] = useState<string>('last_1d')
+  const [preset, setPreset] = useState<PresetValue>('this_month')
 
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
-    const now = new Date()
-    return { from: new Date(now.getTime() - 24 * 60 * 60 * 1000), to: now }
-  })
-
-  const [ticks, setTicks] = useState<number[]>([])
+  // Инициализация dateRange в зависимости от preset
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => getDateRangeByPreset('this_month'))
 
   useEffect(() => {
-    setTicks(createTicks(dateRange.from, dateRange.to, 5))
-  }, [dateRange])
+    setDateRange(getDateRangeByPreset(preset))
+  }, [preset])
 
   useEffect(() => {
     async function fetchSensors() {
@@ -101,26 +124,14 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
     }
   }, [sensors, dateRange])
 
-  useEffect(() => {
-    if (preset === 'custom') return
-
-    const now = new Date()
-    const presetObj = PRESETS.find((p) => p.value === preset)
-    if (!presetObj) return
-
-    setDateRange({ from: new Date(now.getTime() - presetObj.durationMs), to: now })
-  }, [preset])
-
-  function formatDateTime(date: Date) {
-    return format(date, 'yyyy-MM-dd HH:mm')
-  }
-
+  // Обновление dateRange при кастомном выборе
   function setFromDate(date: Date | undefined) {
     if (!date) return
     setPreset('custom')
     const newFrom = new Date(date)
+    // Сохраняем часы/минуты
     newFrom.setHours(dateRange.from.getHours(), dateRange.from.getMinutes())
-    if (newFrom <= dateRange.to) {
+    if (isBefore(newFrom, dateRange.to) || newFrom.getTime() === dateRange.to.getTime()) {
       setDateRange({ from: newFrom, to: dateRange.to })
     }
   }
@@ -130,7 +141,7 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
     setPreset('custom')
     const newTo = new Date(date)
     newTo.setHours(dateRange.to.getHours(), dateRange.to.getMinutes())
-    if (newTo >= dateRange.from) {
+    if (isAfter(newTo, dateRange.from) || newTo.getTime() === dateRange.from.getTime()) {
       setDateRange({ from: dateRange.from, to: newTo })
     }
   }
@@ -140,7 +151,7 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
     const [hours, minutes] = time.split(':').map(Number)
     const newFrom = new Date(dateRange.from)
     newFrom.setHours(hours, minutes)
-    if (newFrom <= dateRange.to) {
+    if (isBefore(newFrom, dateRange.to) || newFrom.getTime() === dateRange.to.getTime()) {
       setDateRange({ from: newFrom, to: dateRange.to })
     }
   }
@@ -150,19 +161,23 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
     const [hours, minutes] = time.split(':').map(Number)
     const newTo = new Date(dateRange.to)
     newTo.setHours(hours, minutes)
-    if (newTo >= dateRange.from) {
+    if (isAfter(newTo, dateRange.from) || newTo.getTime() === dateRange.from.getTime()) {
       setDateRange({ from: dateRange.from, to: newTo })
     }
   }
 
+  function formatDateTime(date: Date) {
+    return format(date, 'yyyy-MM-dd HH:mm')
+  }
+
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Графики для контроллера {controllerUuid}</h1>
 
-      {/* shadcn Select */}
+      {/* Выбор предустановок времени */}
       <div className="mb-4 w-64">
         <label htmlFor="preset-select" className="block mb-1 font-semibold">
-          Интервал времени
+          Выберите интервал
         </label>
         <Select value={preset} onValueChange={setPreset} id="preset-select">
           <SelectTrigger>
@@ -248,7 +263,7 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
                     type="number"
                     dataKey="timestamp"
                     domain={[dateRange.from.getTime(), dateRange.to.getTime()]}
-                    ticks={ticks}
+                    ticks={createTicks(dateRange.from, dateRange.to, 5)}
                     tickFormatter={(unixTime) =>
                       new Date(unixTime).toLocaleString(undefined, {
                         hour: '2-digit',
@@ -268,8 +283,9 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
                         month: 'numeric',
                       })
                     }
+                    formatter={(value) => [`${value}`, 'Значение']}
                   />
-                  <Line type="monotone" dataKey="value" stroke="#8884d8" dot={true} />
+                  <Line type="monotone" dataKey="value" stroke="#8884d8" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -289,4 +305,29 @@ function createTicks(start: Date, end: Date, count: number) {
     ticks.push(startTime + i * interval)
   }
   return ticks
+}
+
+// Рассчитываем даты по выбранному пресету
+function getDateRangeByPreset(preset: PresetValue): { from: Date; to: Date } {
+  const now = new Date()
+  switch (preset) {
+    case 'this_hour':
+      return { from: startOfHour(now), to: endOfHour(now) }
+    case 'last_12_hours':
+      return { from: subHours(now, 12), to: now }
+    case 'today':
+      return { from: startOfDay(now), to: endOfDay(now) }
+    case 'yesterday': {
+      const yesterday = subDays(now, 1)
+      return { from: startOfDay(yesterday), to: endOfDay(yesterday) }
+    }
+    case 'this_week':
+      return { from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) } // неделя с понедельника
+    case 'this_month':
+      return { from: startOfMonth(now), to: endOfMonth(now) }
+    case 'custom':
+    default:
+      // В custom лучше вернуть последние 5 минут по умолчанию, но сюда обычно не заходит
+      return { from: subMinutes(now, 5), to: now }
+  }
 }
