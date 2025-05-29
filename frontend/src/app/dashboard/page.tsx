@@ -158,11 +158,15 @@ export default function DashboardPage() {
                 {sensors
                   .filter((s) => controller.uuid === s.controller)
                   .map((s) => (
-                    <li key={s.id} className='border-grey border-b-[1px]'>
-                      <span className="font-medium">{s.name}</span>{' '}
-                      <span className="text-[12px] text-gray-500">({s.uuid})</span>{' '}
-                      — <span className="font-mono">{s.value ?? 'нет данных'}</span>
-                      <div className="mt-2 w-[90%] mx-auto mb-4">
+                    <li key={s.id} className="border-grey border-b-[1px] py-4 px-2 list-none">
+                      <div className="mb-1">
+                        <div className="text-base font-medium text-gray-800">{s.name}</div>
+                        <div className="text-xs text-gray-500 font-mono break-all">{s.uuid}</div>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-1">
+                        Значение: <span className="font-mono">{s.value ?? 'нет данных'}</span>
+                      </div>
+                      <div className="mt-2 w-[90%] mx-auto">
                         <SensorScale 
                           value={s.value} 
                           critical_min={s.critical_min} 
@@ -265,29 +269,50 @@ export default function DashboardPage() {
 }
 
 
-function SensorScale({ value, critical_min, critical_max }: { value?: number; critical_min?: number; critical_max?: number }) {
-  if (value === undefined || critical_min === undefined || critical_max === undefined) return null;
+function SensorScale({
+  value,
+  critical_min,
+  critical_max
+}: {
+  value?: number;
+  critical_min?: number;
+  critical_max?: number;
+}) {
+  if (
+    value === undefined ||
+    critical_min === undefined ||
+    critical_max === undefined
+  )
+    return null;
 
-  const scaleWidth = Math.max(0, Math.min(100, ((value - critical_min) / (critical_max - critical_min)) * 100)); // Заполнение шкалы
+  const scaleWidth = Math.max(
+    0,
+    Math.min(100, ((value - critical_min) / (critical_max - critical_min)) * 100)
+  );
   const isInCriticalRange = value < critical_min || value > critical_max;
-  const isInWarningRange = (value - critical_min) / (critical_max - critical_min) < 0.2 || (critical_max - value) / (critical_max - critical_min) < 0.2;
+  const isInWarningRange =
+    (value - critical_min) / (critical_max - critical_min) < 0.2 ||
+    (critical_max - value) / (critical_max - critical_min) < 0.2;
 
-  let scaleColor = 'bg-green-500'; // Зеленый по умолчанию
+  let scaleColor = 'bg-green-500';
+  let borderColor = 'border-green-500'
   if (isInCriticalRange) {
-    scaleColor = 'bg-red-500'; // Красный, если значение вне предела
+    scaleColor = 'bg-red-500';
+    borderColor = 'border-red-500'
   } else if (isInWarningRange) {
-    scaleColor = 'bg-yellow-500'; // Желтый, если значение приближается к границе
+    scaleColor = 'bg-yellow-500';
+    borderColor = 'border-yellow-500'
   }
 
   return (
     <div>
-      <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+      <div className={`w-full h-3 bg-gray-200 rounded-full overflow-hidden border-[1px] ${borderColor}`}>
         <div
           className={`h-full ${scaleColor}`}
           style={{ width: `${scaleWidth}%` }}
         />
       </div>
-      <div className='flex justify-between text-[14px]'>
+      <div className="flex justify-between text-[12px] text-gray-500 mt-1">
         <span>{critical_min}</span>
         <span>{critical_max}</span>
       </div>

@@ -198,7 +198,7 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto ">
       <h1 className="text-2xl font-bold">Графики для контроллера {controllerUuid}</h1>
 
       {/* Выбор предустановок времени */}
