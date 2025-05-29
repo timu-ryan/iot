@@ -145,23 +145,30 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
-      <main className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <main className="p-6 max-w-[1440px] mx-auto grid max-lg:grid-cols-1 max-[1400px]:grid-cols-2 grid-cols-3 gap-6">
         {controllers.map((controller) => (
           <Card key={controller.id} className="p-4">
             <h2 className="text-xl font-bold mb-4">
-              {controller.name || 'Без имени'}
+              {controller.name || 'Без имени'} <span className="text-[12px] text-gray-500">({controller.uuid})</span>{' '}
             </h2>
             {user?.role === 'MANAGER' && <Link href={`/controller/${controller.uuid}`} className='underline'>Открыть графики</Link>}
             <div className="mb-4">
               <h3 className="font-semibold mb-1">Датчики:</h3>
               <ul className="list-disc list-inside space-y-1">
                 {sensors
-                  .filter((s) => s.controller === controller.uuid)
+                  .filter((s) => controller.uuid === s.controller)
                   .map((s) => (
-                    <li key={s.id}>
+                    <li key={s.id} className='border-grey border-b-[1px]'>
                       <span className="font-medium">{s.name}</span>{' '}
-                      <span className="text-sm text-gray-500">({s.uuid})</span>{' '}
+                      <span className="text-[12px] text-gray-500">({s.uuid})</span>{' '}
                       — <span className="font-mono">{s.value ?? 'нет данных'}</span>
+                      <div className="mt-2 w-[90%] mx-auto mb-4">
+                        <SensorScale 
+                          value={s.value} 
+                          critical_min={s.critical_min} 
+                          critical_max={s.critical_max} 
+                        />
+                      </div>
                     </li>
                   ))}
               </ul>
@@ -255,4 +262,35 @@ export default function DashboardPage() {
       </Dialog>
     </AuthGuard>
   )
+}
+
+
+function SensorScale({ value, critical_min, critical_max }: { value?: number; critical_min?: number; critical_max?: number }) {
+  if (value === undefined || critical_min === undefined || critical_max === undefined) return null;
+
+  const scaleWidth = Math.max(0, Math.min(100, ((value - critical_min) / (critical_max - critical_min)) * 100)); // Заполнение шкалы
+  const isInCriticalRange = value < critical_min || value > critical_max;
+  const isInWarningRange = (value - critical_min) / (critical_max - critical_min) < 0.2 || (critical_max - value) / (critical_max - critical_min) < 0.2;
+
+  let scaleColor = 'bg-green-500'; // Зеленый по умолчанию
+  if (isInCriticalRange) {
+    scaleColor = 'bg-red-500'; // Красный, если значение вне предела
+  } else if (isInWarningRange) {
+    scaleColor = 'bg-yellow-500'; // Желтый, если значение приближается к границе
+  }
+
+  return (
+    <div>
+      <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className={`h-full ${scaleColor}`}
+          style={{ width: `${scaleWidth}%` }}
+        />
+      </div>
+      <div className='flex justify-between text-[14px]'>
+        <span>{critical_min}</span>
+        <span>{critical_max}</span>
+      </div>
+    </div>
+  );
 }

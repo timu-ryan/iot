@@ -17,17 +17,19 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-gray-800 text-white p-4 flex justify-between">
-      <div className="space-x-4">
-        <Link href="/dashboard">Dashboard</Link>
-        {/* <Link href="/sensors">Sensors</Link>
-        <Link href="/controllers">Controllers</Link>
-        <Link href="/messages">Messages</Link> */}
-      </div>
-      <div>
-      <span className='mr-[20px]'>{user?.last_name} {user?.first_name}</span>
-        {user && <span className='mr-[30px]'>{user?.role === 'MANAGER' ? 'Инженер' : 'Оператор'}</span>}
-        <button onClick={logout} className="text-red-400 hover:underline">Выйти</button>
+    <nav className="bg-gray-800 text-white p-4">
+      <div className='flex justify-between max-w-[1440px] mx-auto px-[20px]'>
+        <div className="space-x-4">
+          <Link href="/dashboard" className='hover:underline'>Dashboard</Link>
+          {/* <Link href="/sensors">Sensors</Link>
+          <Link href="/controllers">Controllers</Link>
+          <Link href="/messages">Messages</Link> */}
+        </div>
+        <div>
+        <span className='mr-[20px]'>{user?.last_name} {user?.first_name}</span>
+          {user && <span className='mr-[30px]'>{user?.role === 'MANAGER' ? 'Инженер' : 'Оператор'}</span>}
+          <button onClick={logout} className="text-red-400 hover:underline cursor-pointer">Выйти</button>
+        </div>
       </div>
     </nav>
   )

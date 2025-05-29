@@ -65,7 +65,7 @@ type PresetValue =
 
 const PRESETS = [
   { label: 'Этот час', value: 'this_hour' },
-  { label: 'Эти 12 часов', value: 'last_12_hours' },
+  // { label: 'Эти 12 часов', value: 'last_12_hours' },
   { label: 'Сегодня', value: 'today' },
   { label: 'Вчера', value: 'yesterday' },
   { label: 'Эта неделя', value: 'this_week' },
