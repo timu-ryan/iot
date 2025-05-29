@@ -148,7 +148,7 @@ TELEGRAM_BOT_TOKEN = '8070759008:AAEDJwWs0zrQVMO_LgeyoKql_9UgsxW9SXc'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 

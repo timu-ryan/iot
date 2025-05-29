@@ -66,8 +66,21 @@ export default function DashboardPage() {
           getRelays()
         ])
         setControllers(ctrls)
-        setSensors(sens)
         setRelays(rlys)
+
+        const updatedSensors = await Promise.all(
+          sens.map(async (s) => {
+            try {
+              const msg = await getLatestMessage(s.uuid);
+              return msg ? { ...s, value: msg.value } : s;
+            } catch (err) {
+              console.warn(`Ошибка получения значения для ${s.uuid}`, err);
+              return s;
+            }
+          })
+        );
+
+        setSensors(updatedSensors)
       } catch (e) {
         console.error('Ошибка загрузки данных', e)
       } finally {
@@ -136,7 +149,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold mb-4">
               {controller.name || 'Без имени'}
             </h2>
-            {user?.role === 'MANAGER' && <Link href={`/controller/${controller.uuid}`}>Открыть графики</Link>}
+            {user?.role === 'MANAGER' && <Link href={`/controller/${controller.uuid}`} className='underline'>Открыть графики</Link>}
             <div className="mb-4">
               <h3 className="font-semibold mb-1">Датчики:</h3>
               <ul className="list-disc list-inside space-y-1">
@@ -196,7 +209,6 @@ export default function DashboardPage() {
                 </div>
               : 
                 <>
-                  <p>если хотите управлять реле, включите ручной режим управления</p>
                   <div className='opacity-40'>
                     <h3 className="font-semibold mb-1">Реле:</h3>
                     <ul className="list-disc list-inside space-y-1">
@@ -210,7 +222,6 @@ export default function DashboardPage() {
                             </div>
                             <Switch
                               checked={r.is_working}
-                              onCheckedChange={() => handleToggleDialog(r)}
                             />
                           </li>
                         ))}
