@@ -42,6 +42,7 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.EMPLOYEE)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
+    telegram_id = models.CharField(max_length=64, null=True, blank=True)
 
     username = None
     email = models.EmailField(unique=True)
@@ -86,6 +87,9 @@ class Sensor(models.Model):
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=50, choices=SensorType.choices)
     description = models.TextField(blank=True, default='')
+
+    critical_min = models.FloatField(null=True, blank=True)
+    critical_max = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} [{self.type}]"

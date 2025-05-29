@@ -1,3 +1,4 @@
+anyio==4.9.0
 asgiref==3.8.1
 certifi==2025.4.26
 cffi==1.17.1
@@ -7,10 +8,16 @@ coreschema==0.0.4
 cryptography==45.0.2
 defusedxml==0.7.1
 Django==4.2.21
+django-cors-headers==4.7.0
+django-filter==25.1
 django-templated-mail==1.1.1
 djangorestframework==3.16.0
 djangorestframework-simplejwt==4.7.2
 djoser==2.1.0
+exceptiongroup==1.3.0
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
 idna==3.10
 itypes==1.2.0
 Jinja2==3.1.6
@@ -19,11 +26,13 @@ oauthlib==3.2.2
 paho-mqtt==2.1.0
 pycparser==2.22
 PyJWT==2.10.1
+python-telegram-bot==22.1
 python3-openid==3.2.0
 pytz==2025.2
 requests==2.32.3
 requests-oauthlib==2.0.0
 six==1.17.0
+sniffio==1.3.1
 social-auth-app-django==4.0.0
 social-auth-core==4.6.1
 sqlparse==0.5.3

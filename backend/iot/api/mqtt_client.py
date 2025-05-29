@@ -4,6 +4,9 @@ import uuid
 import django
 import logging
 import paho.mqtt.client as mqtt
+import requests
+from django.utils.timezone import localtime
+from api.models import User
 
 from django.conf import settings
 
@@ -119,10 +122,50 @@ def handle_sensor_data(client, userdata, msg):
         payload = json.loads(msg.payload.decode())
         value = float(payload["value"])
 
-        Message.objects.create(sensor=sensor, value=value, status=Message.Status.OK)
+        # Сохраняем сообщение
+        message = Message.objects.create(sensor=sensor, value=value, status=Message.Status.OK)
         logger.info(f"Saved sensor data: {sensor.name} = {value}")
+
+        # Проверка на критические значения
+        is_critical = (
+            (sensor.critical_min is not None and value < sensor.critical_min)
+            or
+            (sensor.critical_max is not None and value > sensor.critical_max)
+        )
+
+        if is_critical:
+            timestamp = localtime(message.timestamp).strftime("%Y-%m-%d %H:%M:%S")
+
+            message_text = (
+                f"⚠️ Критическое значение!\n"
+                f"📊 Сенсор: {sensor.name}\n"
+                f"📦​ Тип: {sensor.type}\n"
+                f"📈 Значение: {value}\n"
+                f"📟 Контроллер: {sensor.controller.name}\n"
+                f"🌿 Компания: {sensor.controller.company.name}\n"
+                f"Время: {timestamp}"
+            )
+            send_telegram_alert(sensor.company, message_text)
+
     except Exception as e:
         logger.exception("Sensor data handling error")
+
+
+def send_telegram_alert(company, message_text):
+    users = company.user_set.filter(role=User.Role.MANAGER, telegram_id__isnull=False).exclude(telegram_id='')
+
+    for user in users:
+        try:
+            requests.post(
+                f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                json={
+                    "chat_id": user.telegram_id,
+                    "text": message_text,
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error sending Telegram message to {user.email}: {e}")
+
 
 def handle_command(client, userdata, msg):
     topic_parts = msg.topic.split("/")

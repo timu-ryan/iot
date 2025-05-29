@@ -33,7 +33,7 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': ('is_active', 'is_staff', 'is_superuser', 'role', 'groups', 'user_permissions'),
         }),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
-        ('Company', {'fields': ('company',)}),
+        ('Company', {'fields': ('company', 'telegram_id')}),
     )
     add_fieldsets = (
         (None, {
@@ -41,7 +41,7 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': ('email', 'password1', 'password2', 'role'),
         }),
     )
-    list_display = ('email', 'first_name', 'last_name', 'role', 'company', 'is_staff')
+    list_display = ('email', 'first_name', 'last_name', 'role', 'company', 'is_staff', 'telegram_id')
     list_filter = (CompanyFilter, 'role', 'is_staff')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
