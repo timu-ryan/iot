@@ -44,7 +44,7 @@ class SensorSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Sensor
-        fields = ['id', 'uuid', 'name', 'type', 'controller', 'description', 'critical_min', 'critical_max']
+        fields = ['id', 'uuid', 'name', 'type', 'controller', 'description', 'critical_min', 'critical_max', 'unit_of_measurements']
         read_only_fields = ['id', 'uuid']
 
     def validate(self, data):

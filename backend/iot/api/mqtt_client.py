@@ -84,7 +84,8 @@ def handle_init(client, userdata, msg):
                     controller=controller,
                     name=sensor["name"],
                     type=sensor["type"],
-                    uuid=sensor["uuid"]
+                    uuid=sensor["uuid"],
+                    unit_of_measurements=sensor["unit_of_measurements"]
                 )
             except KeyError as e:
                 logger.warning(f"Missing sensor field: {e}")
@@ -140,7 +141,7 @@ def handle_sensor_data(client, userdata, msg):
                 f"⚠️ Критическое значение!\n"
                 f"📊 Сенсор: {sensor.name}\n"
                 f"📦​ Тип: {sensor.type}\n"
-                f"📈 Значение: {value}\n"
+                f"📈 Значение: {value} {sensor.unit_of_measurements} \n"
                 f"📟 Контроллер: {sensor.controller.name}\n"
                 f"🌿 Компания: {sensor.controller.company.name}\n"
                 f"Время: {timestamp}"

@@ -32,6 +32,7 @@ interface Sensor {
   controller: string
   critical_min?: number
   critical_max?: number
+  unit_of_measurements?: string
 }
 
 interface Relay {
@@ -164,7 +165,7 @@ export default function DashboardPage() {
                         <div className="text-xs text-gray-500 font-mono break-all">{s.uuid}</div>
                       </div>
                       <div className="text-sm text-gray-600 mb-1">
-                        Значение: <span className="font-mono">{s.value ?? 'нет данных'}</span>
+                        Значение: <span className="font-mono">{s.value ?? 'нет данных'} {s.unit_of_measurements}</span>
                       </div>
                       <div className="mt-2 w-[90%] mx-auto">
                         <SensorScale 

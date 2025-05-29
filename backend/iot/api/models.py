@@ -91,6 +91,8 @@ class Sensor(models.Model):
     critical_min = models.FloatField(null=True, blank=True)
     critical_max = models.FloatField(null=True, blank=True)
 
+    unit_of_measurements = models.CharField(max_length=20, null=True, blank=True)
+
     def __str__(self):
         return f"{self.name} [{self.type}]"
 
