@@ -30,6 +30,8 @@ interface Sensor {
   name: string
   uuid: string
   controller: string
+  critical_min?: number
+  critical_max?: number
 }
 
 interface Relay {

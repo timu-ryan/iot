@@ -4,7 +4,7 @@ import { use } from 'react'
 import { useEffect, useState } from 'react'
 import { getSensors, getMessages } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -16,7 +16,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -44,6 +43,8 @@ interface Sensor {
   uuid: string
   name: string
   controller: string
+  critical_min?: number
+  critical_max?: number
 }
 
 interface Message {
@@ -170,6 +171,32 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
     return format(date, 'yyyy-MM-dd HH:mm')
   }
 
+  function calculateYDomain(sensor: Sensor, messages: Message[]): [number, number] {
+    if (messages.length === 0) {
+      // По умолчанию диапазон, например, 0-100, чтобы график рисовался
+      return [0, 100]
+    }
+  
+    const values = messages.map(m => m.value)
+    let minValue = Math.min(...values)
+    let maxValue = Math.max(...values)
+  
+    // Если есть критические значения, учитываем их тоже
+    if (sensor.critical_min !== undefined) {
+      minValue = Math.min(minValue, sensor.critical_min)
+    }
+    if (sensor.critical_max !== undefined) {
+      maxValue = Math.max(maxValue, sensor.critical_max)
+    }
+  
+    // Добавим запас 10% сверху и снизу
+    const padding = (maxValue - minValue) * 0.1 || 1 // если диапазон 0, берем 1
+    const domainMin = minValue - padding
+    const domainMax = maxValue + padding
+  
+    return [domainMin, domainMax]
+  }
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Графики для контроллера {controllerUuid}</h1>
@@ -251,42 +278,76 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
             </h2>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={(messagesBySensor[sensor.uuid] || []).map((msg) => ({
-                    ...msg,
-                    timestamp: new Date(msg.timestamp).getTime(),
-                  }))}
-                  margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    type="number"
-                    dataKey="timestamp"
-                    domain={[dateRange.from.getTime(), dateRange.to.getTime()]}
-                    ticks={createTicks(dateRange.from, dateRange.to, 5)}
-                    tickFormatter={(unixTime) =>
-                      new Date(unixTime).toLocaleString(undefined, {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        day: 'numeric',
-                        month: 'numeric',
-                      })
-                    }
+              <LineChart
+                data={(messagesBySensor[sensor.uuid] || []).map((msg) => ({
+                  ...msg,
+                  timestamp: new Date(msg.timestamp).getTime(),
+                }))}
+                margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  type="number"
+                  dataKey="timestamp"
+                  domain={[dateRange.from.getTime(), dateRange.to.getTime()]}
+                  ticks={createTicks(dateRange.from, dateRange.to, 5)}
+                  tickFormatter={(unixTime) =>
+                    new Date(unixTime).toLocaleString(undefined, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      day: 'numeric',
+                      month: 'numeric',
+                    })
+                  }
+                />
+                <YAxis domain={calculateYDomain(sensor, messagesBySensor[sensor.uuid] || [])} />
+
+                {/* Линия минимального критического значения */}
+                {sensor.critical_min !== undefined && (
+                  <ReferenceLine
+                    y={sensor.critical_min}
+                    label={{
+                      value: `мин. критическое (${sensor.critical_min})`,
+                      position: 'top',
+                      fill: 'red',
+                      fontSize: 12,
+                    }}
+                    stroke="red"
+                    strokeDasharray="3 3"
+                    ifOverflow="visible"
                   />
-                  <YAxis />
-                  <Tooltip
-                    labelFormatter={(value) =>
-                      new Date(value).toLocaleString(undefined, {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        day: 'numeric',
-                        month: 'numeric',
-                      })
-                    }
-                    formatter={(value) => [`${value}`, 'Значение']}
+                )}
+
+                {/* Линия максимального критического значения */}
+                {sensor.critical_max !== undefined && (
+                  <ReferenceLine
+                    y={sensor.critical_max}
+                    label={{
+                      value: `макс. критическое (${sensor.critical_max})`,
+                      position: 'bottom',
+                      fill: 'red',
+                      fontSize: 12,
+                    }}
+                    stroke="red"
+                    strokeDasharray="3 3"
+                    ifOverflow="visible"
                   />
-                  <Line type="monotone" dataKey="value" stroke="#8884d8" dot={false} />
-                </LineChart>
+                )}
+
+                <Tooltip
+                  labelFormatter={(value) =>
+                    new Date(value).toLocaleString(undefined, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      day: 'numeric',
+                      month: 'numeric',
+                    })
+                  }
+                  formatter={(value) => [`${value}`, 'Значение']}
+                />
+                <Line type="monotone" dataKey="value" stroke="#8884d8" dot={false} />
+              </LineChart>
+
               </ResponsiveContainer>
             </div>
           </CardContent>
