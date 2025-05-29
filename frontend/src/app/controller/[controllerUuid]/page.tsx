@@ -356,7 +356,7 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
                   }
                   formatter={(value) => [`${value}`, 'Значение']}
                 />
-                <Line type="monotone" dataKey="value" stroke="#8884d8" dot={false} />
+                <Line type="monotone" dataKey="value" strokeWidth={2} stroke="#8884d8" dot={false} />
               </LineChart>
 
               </ResponsiveContainer>
