@@ -60,6 +60,10 @@ export default function DashboardPage() {
   const [selectedRelay, setSelectedRelay] = useState<Relay | null>(null)
   const [pendingState, setPendingState] = useState(false)
 
+  const [selectedController, setSelectedController] = useState<Controller | null>(null)
+  const [isModeChange, setIsModeChange] = useState(false)
+  const [newMode, setNewMode] = useState<'manual' | 'auto'>('manual')
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -122,23 +126,34 @@ export default function DashboardPage() {
   }
 
   const confirmToggle = async () => {
-    if (!selectedRelay) return
     try {
-      await toggleRelay(
-        controllers.find(c => c.id === selectedRelay.controller)!.uuid,
-        selectedRelay.uuid,
-        pendingState
-      )
-      setRelays((prev) =>
-        prev.map((r) =>
-          r.id === selectedRelay.id ? { ...r, is_working: pendingState } : r
+      if (isModeChange && selectedController) {
+        const updated = await updateControllerMode(selectedController.id, newMode)
+        setControllers(prev =>
+          prev.map(c =>
+            c.id === selectedController.id ? { ...c, control_mode: updated.control_mode } : c
+          )
         )
-      )
+      } else if (selectedRelay) {
+        await toggleRelay(
+          controllers.find(c => c.id === selectedRelay.controller)!.uuid,
+          selectedRelay.uuid,
+          pendingState
+        )
+        setRelays((prev) =>
+          prev.map((r) =>
+            r.id === selectedRelay.id ? { ...r, is_working: pendingState } : r
+          )
+        )
+      }
     } catch (err) {
-      alert('Ошибка при переключении реле')
+      alert('Ошибка при выполнении действия')
       console.error(err)
     } finally {
       setDialogOpen(false)
+      setSelectedRelay(null)
+      setSelectedController(null)
+      setIsModeChange(false)
     }
   }
 
@@ -184,16 +199,11 @@ export default function DashboardPage() {
                 <Switch
                   checked={controller.control_mode === 'manual'}
                   onCheckedChange={async () => {
-                    const newMode = controller.control_mode === 'manual' ? 'auto' : 'manual'
-                    try {
-                      const updated = await updateControllerMode(controller.id, newMode)
-                      setControllers(prev =>
-                        prev.map(c => c.id === controller.id ? { ...c, control_mode: updated.control_mode } : c)
-                      )
-                    } catch (err) {
-                      alert('Ошибка при переключении режима управления')
-                      console.error(err)
-                    }
+                    const mode = controller.control_mode === 'manual' ? 'auto' : 'manual'
+                    setSelectedController(controller)
+                    setNewMode(mode)
+                    setIsModeChange(true)
+                    setDialogOpen(true)
                   }}
                 />
               </div>
@@ -253,10 +263,18 @@ export default function DashboardPage() {
           <DialogHeader>
             <DialogTitle>Подтвердите действие</DialogTitle>
           </DialogHeader>
-          <p>
-            Вы уверены, что хотите {pendingState ? 'включить' : 'выключить'} реле{' '}
-            <strong>{selectedRelay?.name}</strong>?
-          </p>
+          {isModeChange && selectedController ? (
+            <p>
+              Вы уверены, что хотите переключить режим управления контроллера{' '}
+              <strong>{selectedController.name}</strong> на{' '}
+              <strong>{newMode === 'manual' ? 'ручной' : 'автоматический'}</strong>?
+            </p>
+          ) : (
+            <p>
+              Вы уверены, что хотите {pendingState ? 'включить' : 'выключить'} реле{' '}
+              <strong>{selectedRelay?.name}</strong>?
+            </p>
+          )}
           <DialogFooter className="mt-4">
             <Button variant="secondary" onClick={() => setDialogOpen(false)}>
               Отмена
