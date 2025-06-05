@@ -7,7 +7,6 @@ import {
   getRelays,
   getLatestMessage,
   toggleRelay,
-  getMe,
   updateControllerMode
 } from '@/lib/api'
 import AuthGuard from '@/components/AuthGuard'
@@ -17,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import Link from 'next/link'
 import { useUser } from '@/context/UserContext'
+import AlertsPanel from '@/components/AlertPanel'
 
 interface Controller {
   id: number
@@ -64,6 +64,8 @@ export default function DashboardPage() {
   const [isModeChange, setIsModeChange] = useState(false)
   const [newMode, setNewMode] = useState<'manual' | 'auto'>('manual')
 
+  const [criticalSensors, setCriticalSensors] = useState<SensorWithValue[]>([])
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -104,9 +106,11 @@ export default function DashboardPage() {
         sensors.map(async (s) => {
           try {
             const msg = await getLatestMessage(s.uuid)
-            return msg
-              ? { ...s, value: msg.value }
-              : { ...s, value: undefined }
+            const value = msg?.value
+  
+            const updated = msg ? { ...s, value } : { ...s, value: undefined }
+  
+            return updated
           } catch (err) {
             console.warn(`Ошибка получения значения для ${s.uuid}`, err)
             return s
@@ -114,6 +118,17 @@ export default function DashboardPage() {
         })
       )
       setSensors(updatedSensors)
+  
+      // фильтруем критичные
+      const critical = updatedSensors.filter(s =>
+        s.value !== undefined &&
+        (
+          (s.critical_min !== undefined && s.value < s.critical_min) ||
+          (s.critical_max !== undefined && s.value > s.critical_max)
+        )
+      )
+  
+      setCriticalSensors(critical)
     }, 5000)
 
     return () => clearInterval(interval)
@@ -161,7 +176,10 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
-      <main className="p-6 max-w-[1440px] mx-auto grid max-lg:grid-cols-1 max-[1400px]:grid-cols-2 grid-cols-3 gap-6">
+      <div className='max-w-[1440px] mx-auto relative p-6'>
+        <AlertsPanel sensors={sensors} />
+      <main className="py-6 max-w-[1440px] mx-auto grid max-lg:grid-cols-1 max-[1400px]:grid-cols-2 grid-cols-3 gap-6 relative">
+        
         {controllers.map((controller) => (
           <Card key={controller.id} className="p-4">
             <h2 className="text-xl font-bold mb-4">
@@ -257,6 +275,7 @@ export default function DashboardPage() {
           </Card>
         ))}
       </main>
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

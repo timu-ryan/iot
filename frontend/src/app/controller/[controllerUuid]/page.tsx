@@ -200,7 +200,7 @@ export default function ControllerChartsPage({ params }: { params: Promise<{ con
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto ">
-      <h1 className="text-2xl font-bold">Графики для контроллера {controllerUuid}</h1>
+      <h1 className="text-2xl font-bold">Графики для &quot;Контроллер CTM-12&quot; <span className='text-sm text-[#00000080]'>({controllerUuid})</span></h1>
 
       {/* Выбор предустановок времени */}
       <div className="mb-4 w-64">
